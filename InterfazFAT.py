@@ -5,10 +5,8 @@ from PyQt6.QtWidgets import (
     QMessageBox, QCheckBox, QGroupBox, QFormLayout
 )
 from PyQt6.QtCore import Qt
-# Asegúrate de que FATSimulador.py esté en el mismo directorio.
 from FATSimulador import FATSimulador, Usuario
 
-# --- PALETA DE COLORES --- (Basada en las imágenes proporcionadas)
 BEIGE_CLARO = "#DBAFA0"
 ROSA_MALVA = "#BB8493"
 MORADO_OSCURO_FONDO = "#704264"
@@ -16,8 +14,6 @@ MORADO_MUY_OSCURO = "#49243E"
 TEXTO_CLARO = "#FFFFFF"
 TEXTO_OSCURO = "#000000"
 
-
-# --- 1. CLASE VENTANA DE LOGIN ---
 
 class VentanaLogin(QMainWindow):
     CREDENCIALES = {
@@ -91,8 +87,6 @@ class VentanaLogin(QMainWindow):
         QMessageBox.critical(self, "Error de Login", "Credenciales incorrectas. Intente de nuevo.")
 
 
-# --- 2. CLASE VENTANA PRINCIPAL ---
-
 class VentanaFAT(QMainWindow):
     def __init__(self, usuario_logueado):
         super().__init__()
@@ -117,26 +111,23 @@ class VentanaFAT(QMainWindow):
 
         self.cargar_lista_activa()
 
-        # Conexiones
-        self.btn_crear.clicked.connect(self.crear_archivo)  # Solución al AttributeError
+        self.btn_crear.clicked.connect(self.crear_archivo)
         self.list_activa.itemClicked.connect(lambda item: self.mostrar_detalle(item, es_papelera=False))
         self.list_papelera.itemClicked.connect(lambda item: self.mostrar_detalle(item, es_papelera=True))
 
         self.btn_abrir.clicked.connect(self.abrir_archivo)
-        self.btn_modificar.clicked.connect(self.modificar_archivo_ui)  # Función de modificación corregida
+        self.btn_modificar.clicked.connect(self.modificar_archivo_ui)
         self.btn_eliminar.clicked.connect(self.eliminar_archivo)
         self.btn_listar_papelera.clicked.connect(lambda: self.cargar_lista_papelera(True))
         self.btn_recuperar.clicked.connect(self.recuperar_archivo)
         self.btn_asignar_permisos.clicked.connect(self.asignar_permisos_ui)
 
     def aplicar_restricciones_rol(self):
-        """Oculta o deshabilita elementos según el rol del usuario logueado."""
         if not self.usuario_actual.es_owner:
             self.grp_control.hide()
             self.grp_permisos.hide()
             self.btn_crear.setDisabled(True)
             self.txt_nombre.setReadOnly(True)
-            # txt_contenido se gestiona dinámicamente en mostrar_detalle
             self.grp_crear.setTitle("1. Crear Archivo (Solo Admin)")
         else:
             self.txt_contenido.setReadOnly(False)
@@ -216,18 +207,15 @@ class VentanaFAT(QMainWindow):
         lay_crear.addWidget(self.btn_crear)
         layout.addWidget(self.grp_crear)
 
-        # Grupo: Permisos (ADMIN ONLY) - Ahora con ListBox
         self.grp_permisos = QGroupBox("2. Gestión de Permisos (ADMIN ONLY)")
         lay_permisos = QVBoxLayout(self.grp_permisos)
 
-        # ListBox para el Archivo
         lay_permisos.addWidget(QLabel("Seleccionar Archivo:"))
         self.list_permisos_archivo = QListWidget()
         self.list_permisos_archivo.setMinimumHeight(100)
         self.list_permisos_archivo.setSelectionMode(QListWidget.SelectionMode.SingleSelection)
         lay_permisos.addWidget(self.list_permisos_archivo)
 
-        # ListBox para el Usuario Objetivo (SOLUCIÓN: Solo muestra usuario_prueba)
         lay_permisos.addWidget(QLabel("Seleccionar Usuario Objetivo:"))
         self.list_usuario_permisos = QListWidget()
         self.list_usuario_permisos.setMinimumHeight(50)
@@ -344,13 +332,10 @@ class VentanaFAT(QMainWindow):
             self.cargar_lista_activa()
 
     def mostrar_detalle(self, item, es_papelera):
-        """Muestra detalles y HABILITA/DESHABILITA la caja de contenido según el permiso de escritura."""
         nombre_archivo = item.text()
 
-        # Abrir el archivo para obtener metadatos y contenido
         contenido, fat_entry = self.simulador_fat.abrir_archivo(nombre_archivo, self.usuario_actual.nombre)
 
-        # Por defecto, el área de contenido se deshabilita
         self.txt_contenido.setReadOnly(True)
 
         if fat_entry:
@@ -365,7 +350,6 @@ class VentanaFAT(QMainWindow):
             detalle += f"Tamaño: {fat_entry['caracteres_total']} caracteres\n"
             detalle += f"Modificación: {fat_entry['fecha_modificacion'][:19].replace('T', ' ')}\n"
 
-            # --- LÓGICA DE PERMISOS PARA LA UI ---
             puede_escribir = False
             if self.usuario_actual.nombre == "admin":
                 detalle += f"Tus Permisos: L=True, E=True (Admin Total)\n"
@@ -376,9 +360,8 @@ class VentanaFAT(QMainWindow):
                     puede_escribir = True
 
             if puede_escribir:
-                # Si tiene permiso de escritura, se activa la caja de contenido para ingresar el NUEVO contenido
                 self.txt_contenido.setReadOnly(False)
-                self.txt_contenido.clear()  # Limpia para el nuevo contenido
+                self.txt_contenido.clear()
                 self.txt_contenido.setPlaceholderText(
                     f"Ingrese el NUEVO contenido para modificar '{nombre_archivo}' aquí.")
             else:
@@ -401,7 +384,6 @@ class VentanaFAT(QMainWindow):
             self.txt_contenido.setPlaceholderText("No hay archivo seleccionado.")
 
     def abrir_archivo(self):
-        """Muestra el contenido en un QMessageBox."""
         try:
             nombre_archivo = self.list_activa.currentItem().text()
         except:
@@ -410,18 +392,15 @@ class VentanaFAT(QMainWindow):
 
         contenido, fat_entry = self.simulador_fat.abrir_archivo(nombre_archivo, self.usuario_actual.nombre)
 
-        # Si el contenido es una cadena y es un mensaje de denegación/error
         if isinstance(contenido, str) and (
                 "Acceso denegado" in contenido or "Error: Archivo no encontrado" in contenido):
             QMessageBox.critical(self, "Error de Apertura", contenido)
-        # Si el contenido es el texto del archivo
         elif isinstance(contenido, str):
             QMessageBox.information(self, f"Contenido de '{nombre_archivo}'", contenido, QMessageBox.StandardButton.Ok)
         else:
             QMessageBox.critical(self, "Error de Apertura", "Fallo desconocido al abrir el archivo.")
 
     def modificar_archivo_ui(self):
-        """Maneja la modificación desde la UI, validando el permiso y mostrando el mensaje de error."""
         try:
             nombre_archivo = self.list_activa.currentItem().text()
         except:
@@ -435,10 +414,8 @@ class VentanaFAT(QMainWindow):
                                 "Ingrese el nuevo contenido en el área de 'Contenido' a la izquierda.")
             return
 
-        # Llama a la lógica del simulador (que incluye la validación de permisos)
         mensaje = self.simulador_fat.modificar_archivo(nombre_archivo, nuevo_contenido, self.usuario_actual.nombre)
 
-        # Si el mensaje contiene "Acceso denegado", muestra un error.
         if "Acceso denegado" in mensaje:
             QMessageBox.critical(self, "Modificación Denegada", mensaje)
         else:
@@ -506,7 +483,6 @@ class VentanaFAT(QMainWindow):
         self.cargar_lista_activa()
 
 
-# --- 3. INICIO DE LA APLICACIÓN ---
 if __name__ == "__main__":
     try:
         QApplication.setStyle(QStyleFactory.create("Fusion"))

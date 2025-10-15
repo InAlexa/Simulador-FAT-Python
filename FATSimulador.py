@@ -3,7 +3,6 @@ import json
 from datetime import datetime
 import uuid
 
-# Constantes del sistema de archivos
 BLOCK_SIZE = 20
 FAT_DIR = 'data/fat_table'
 BLOCKS_DIR = 'data/blocks'
@@ -17,10 +16,7 @@ class Usuario:
 
 
 class FATSimulador:
-    """Clase que simula los mecanismos de control del sistema de archivos FAT."""
-
     def __init__(self):
-        # Crear directorios si no existen
         os.makedirs(FAT_DIR, exist_ok=True)
         os.makedirs(BLOCKS_DIR, exist_ok=True)
 
@@ -41,7 +37,6 @@ class FATSimulador:
         return False
 
     def _generar_bloques(self, contenido, archivo_nombre):
-        """Segmenta el contenido en bloques de 20 caracteres y los guarda como JSON."""
         bloques = [contenido[i:i + BLOCK_SIZE]
                    for i in range(0, len(contenido), BLOCK_SIZE)]
 
@@ -62,7 +57,6 @@ class FATSimulador:
             if i == 0:
                 primer_bloque_path = ruta_bloque
 
-        # Enlazar los bloques
         for i in range(len(bloque_paths) - 1):
             ruta_actual = bloque_paths[i]
             ruta_siguiente = bloque_paths[i + 1]
@@ -74,10 +68,9 @@ class FATSimulador:
         return primer_bloque_path
 
     def _obtener_contenido_completo(self, ruta_inicial_bloque):
-        """Concatena el contenido de todos los bloques de un archivo."""
         contenido_completo = ""
         ruta_actual = ruta_inicial_bloque
-        max_bloques = 1000  # Límite de seguridad
+        max_bloques = 1000
         bloques_leidos = 0
 
         while ruta_actual and bloques_leidos < max_bloques:
@@ -95,10 +88,7 @@ class FATSimulador:
 
         return contenido_completo
 
-    # --- Operaciones de Archivos ---
-
     def crear_archivo(self, nombre, contenido, owner=ADMIN_USER):
-        """Crea un nuevo archivo, genera sus bloques y la entrada FAT."""
         ruta_fat_check = os.path.join(FAT_DIR, f"{nombre}.json")
         if os.path.exists(ruta_fat_check):
             return f"Error: Ya existe un archivo llamado '{nombre}'.", False
@@ -119,7 +109,6 @@ class FATSimulador:
             "fecha_modificacion": fecha_actual,
             "fecha_eliminacion": None,
             "owner": owner,
-            # El owner siempre tiene permisos
             "permisos_usuarios": {
                 owner: {"lectura": True, "escritura": True},
             }
@@ -131,7 +120,6 @@ class FATSimulador:
         return f"Archivo '{nombre}' creado y FAT actualizado con {len(contenido)} caracteres.", True
 
     def listar_archivos(self, mostrar_papelera=False):
-        """Lista archivos activos (o en papelera) leyendo el directorio FAT."""
         archivos_listos = []
         for filename in os.listdir(FAT_DIR):
             if filename.endswith(".json"):
@@ -141,54 +129,44 @@ class FATSimulador:
         return archivos_listos
 
     def abrir_archivo(self, nombre_archivo, usuario):
-        """Abre un archivo, valida permisos de lectura y devuelve el contenido completo."""
         ruta_fat = os.path.join(FAT_DIR, f"{nombre_archivo}.json")
         fat_entry = self._cargar_json(ruta_fat)
 
         if not fat_entry:
             return "Error: Archivo no encontrado.", None
 
-        # 1. ACCESO INCONDICIONAL PARA ADMIN
         if usuario == ADMIN_USER:
             contenido = self._obtener_contenido_completo(fat_entry['ruta_o_nombre_inicial'])
             return contenido, fat_entry
 
-        # 2. Validación de permisos para usuario estándar
         permisos_usuarios = fat_entry.get('permisos_usuarios', {})
-        # Devuelve el permiso asignado o False/False por defecto si no está en la lista.
         usuario_permisos = permisos_usuarios.get(usuario, {"lectura": False, "escritura": False})
 
         if not usuario_permisos.get('lectura', False):
             return "Acceso denegado: No tiene permiso de lectura.", fat_entry
 
-        # Si el usuario es estándar y tiene permisos:
         contenido = self._obtener_contenido_completo(fat_entry['ruta_o_nombre_inicial'])
 
         return contenido, fat_entry
 
     def modificar_archivo(self, nombre_archivo, nuevo_contenido, usuario):
-        """Modifica el archivo, eliminando bloques viejos y creando nuevos."""
         ruta_fat = os.path.join(FAT_DIR, f"{nombre_archivo}.json")
         fat_entry = self._cargar_json(ruta_fat)
 
         if not fat_entry:
             return "Error: Archivo no encontrado."
 
-        # 1. ACCESO INCONDICIONAL PARA ADMIN
         if usuario != ADMIN_USER:
-            # Validación de permisos de escritura para usuarios estándar
             permisos_usuarios = fat_entry.get('permisos_usuarios', {})
             usuario_permisos = permisos_usuarios.get(usuario, {"lectura": False, "escritura": False})
 
             if not usuario_permisos.get('escritura', False):
                 return "Acceso denegado: No tiene permiso de escritura."
 
-        # 2. Procede a la modificación: elimina bloques viejos
         ruta_vieja_inicial = fat_entry['ruta_o_nombre_inicial']
 
         nueva_ruta_inicial = self._generar_bloques(nuevo_contenido, nombre_archivo)
 
-        # Elimina físicamente los bloques antiguos
         ruta_a_eliminar = ruta_vieja_inicial
         while ruta_a_eliminar:
             bloque = self._cargar_json(ruta_a_eliminar)
@@ -201,7 +179,6 @@ class FATSimulador:
             else:
                 break
 
-        # 3. Actualiza la entrada FAT
         fat_entry['ruta_o_nombre_inicial'] = nueva_ruta_inicial
         fat_entry['caracteres_total'] = len(nuevo_contenido)
         fat_entry['fecha_modificacion'] = datetime.now().isoformat()
@@ -210,7 +187,6 @@ class FATSimulador:
         return f"Archivo '{nombre_archivo}' modificado exitosamente. Bloques antiguos eliminados."
 
     def eliminar_archivo(self, nombre_archivo):
-        """Mueve el archivo a la papelera (bandera 'papelera' = True)."""
         ruta_fat = os.path.join(FAT_DIR, f"{nombre_archivo}.json")
         fat_entry = self._cargar_json(ruta_fat)
         if not fat_entry:
@@ -225,7 +201,6 @@ class FATSimulador:
         return f"Archivo '{nombre_archivo}' movido a la papelera."
 
     def recuperar_archivo(self, nombre_archivo):
-        """Recupera el archivo de la papelera (bandera 'papelera' = False)."""
         ruta_fat = os.path.join(FAT_DIR, f"{nombre_archivo}.json")
         fat_entry = self._cargar_json(ruta_fat)
         if not fat_entry:
@@ -240,7 +215,6 @@ class FATSimulador:
         return f"Archivo '{nombre_archivo}' recuperado de la papelera."
 
     def asignar_permisos(self, nombre_archivo, usuario_objetivo, lectura, escritura, owner=ADMIN_USER):
-        """Asigna permisos de Lectura/Escritura a un usuario en específico."""
         ruta_fat = os.path.join(FAT_DIR, f"{nombre_archivo}.json")
         fat_entry = self._cargar_json(ruta_fat)
 
