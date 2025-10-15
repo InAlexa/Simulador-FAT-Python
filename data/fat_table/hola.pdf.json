@@ -1,0 +1,20 @@
+{
+    "nombre": "hola.pdf",
+    "ruta_o_nombre_inicial": "data/blocks\\12852915-cea6-4db3-a1a6-301db556ddab.json",
+    "papelera": false,
+    "caracteres_total": 2,
+    "fecha_creacion": "2025-10-14T20:53:13.850300",
+    "fecha_modificacion": "2025-10-14T21:05:04.924340",
+    "fecha_eliminacion": null,
+    "owner": "admin",
+    "permisos_usuarios": {
+        "admin": {
+            "lectura": true,
+            "escritura": true
+        },
+        "usuario_prueba": {
+            "lectura": true,
+            "escritura": false
+        }
+    }
+}

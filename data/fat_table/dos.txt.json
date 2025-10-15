@@ -1,0 +1,24 @@
+{
+    "nombre": "dos.txt",
+    "ruta_o_nombre_inicial": "data/blocks\\f5d20cd6-a422-4e62-8b3f-4e6745371a45.json",
+    "papelera": false,
+    "caracteres_total": 24,
+    "fecha_creacion": "2025-10-14T19:16:06.606817",
+    "fecha_modificacion": "2025-10-14T21:03:57.877961",
+    "fecha_eliminacion": null,
+    "owner": "admin",
+    "permisos": {
+        "lectura": true,
+        "escritura": true
+    },
+    "permisos_usuarios": {
+        "admin": {
+            "lectura": true,
+            "escritura": true
+        },
+        "usuario_prueba": {
+            "lectura": true,
+            "escritura": true
+        }
+    }
+}

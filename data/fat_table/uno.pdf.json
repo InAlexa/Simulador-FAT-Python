@@ -1,0 +1,24 @@
+{
+    "nombre": "uno.pdf",
+    "ruta_o_nombre_inicial": "data/blocks\\f27f8d80-daef-4f13-8cc9-76664e58e9a8.json",
+    "papelera": false,
+    "caracteres_total": 3,
+    "fecha_creacion": "2025-10-14T19:15:49.304465",
+    "fecha_modificacion": "2025-10-14T19:26:54.989465",
+    "fecha_eliminacion": null,
+    "owner": "admin",
+    "permisos": {
+        "lectura": true,
+        "escritura": true
+    },
+    "permisos_usuarios": {
+        "usuario_prueba": {
+            "lectura": true,
+            "escritura": false
+        },
+        "admin": {
+            "lectura": true,
+            "escritura": true
+        }
+    }
+}
